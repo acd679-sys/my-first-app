@@ -573,7 +573,7 @@
   // 変わっていなければ、このブラウザに保存した編集内容を使う。
   let SEED_ID = '';
   try { const raw = document.getElementById('app-state').textContent; let h = 0; for (let i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) | 0; SEED_ID = String(h) + ':' + raw.length; } catch(e) {}
-  if (!artifactApi) { try { const box = JSON.parse(localStorage.getItem('zemiLocalState')||'null'); if (box && box.seed === SEED_ID && box.state && Array.isArray(box.state.zemi)) state = box.state; } catch(e){} }
+  if (!artifactApi) { try { const box = JSON.parse(localStorage.getItem('zemiLocalState')||'null'); if (box && box.state && Array.isArray(box.state.zemi)) { state = box.state; if (box.seed !== SEED_ID) window.__zemiStaleLocal = true; } } catch(e){} }
 
   function findEntry(id){ return state.zemi.find(z => z.id === id); }
 
@@ -667,6 +667,15 @@
     try { localStorage.setItem('zemiProbe', '1'); ok = localStorage.getItem('zemiProbe') === '1'; localStorage.removeItem('zemiProbe'); } catch(e) {}
     if (ok) setSaveStatus('この画面での編集は、このパソコンのこのブラウザにだけ保存されます（公開ページには反映されません）');
     else setSaveStatus('この画面では編集内容を保存できません。公開ページのURLから開いて編集してください', true);
+    if (ok && window.__zemiStaleLocal && saveStatusEl) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn secondary'; b.style.marginLeft = '8px';
+      b.textContent = '公開版の最新内容に切り替える';
+      b.addEventListener('click', () => { if (confirm('このブラウザでの編集は消えます。先に「公開用ファイルとして保存」で控えを取りましたか？\n切り替えますか？')) { try { localStorage.removeItem('zemiLocalState'); } catch(e){} location.reload(); } });
+      saveStatusEl.appendChild(document.createElement('br'));
+      saveStatusEl.appendChild(document.createTextNode('公開版が更新されていますが、このブラウザの編集内容を残して表示しています。'));
+      saveStatusEl.appendChild(b);
+    }
   })();
   async function doPersist(){
     if (saving) return;
