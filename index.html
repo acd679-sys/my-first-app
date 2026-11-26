@@ -1277,6 +1277,29 @@
   });
   adminBackBtn.addEventListener('click', showList);
 
+  // ---- 戻るキー(ブラウザの「戻る」)でサイトが閉じないようにする ----
+  // 戻るキーを押したときは、詳細・編集者ページなら一覧へ戻り、一覧ならその場にとどまる。
+  // サイトを閉じるのは、タブを閉じたときだけ。
+  (function backKeyGuard(){
+    let need = true;
+    const mark = { zemiApp: true };
+    const push = () => { try { history.pushState(mark, '', location.href); } catch(e){} };
+    try { history.replaceState({ zemiBase: true }, '', location.href); } catch(e){}
+    push();
+    // 一部のブラウザは、画面を触る前に追加した履歴を戻るキーで飛ばすため、最初に触ったときにも1つ追加する
+    const onGesture = () => { if (need) { push(); need = false; } };
+    ['pointerdown', 'keydown', 'touchend'].forEach(ev => window.addEventListener(ev, onGesture, { capture: true, passive: true }));
+    window.addEventListener('popstate', () => {
+      if (screenList.style.display === 'none') {
+        try { sessionStorage.removeItem(CARET_KEY); } catch(e) {}
+        showList();
+        persistNow();
+      }
+      push();
+      need = true;
+    });
+  })();
+
   // ---- 編集者ページ ----
   function renderAdmin(){
     resetArmed = false;
