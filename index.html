@@ -527,7 +527,7 @@
   let currentId = null;
   let deleteArmed = false;
   let resetArmed = false;
-  let pwPurpose = null; // 'edit' | 'admin' | 'reset'
+  let pwPurpose = null; // 'edit' | 'admin' | 'reset' | 'add'
 
   // ボタンをクリックした後もフォーカスが残ると、次にスペースキーでスクロールしようとしたときに
   // ブラウザがそのボタンを「クリック」したと解釈し、前の画面に戻ってしまうことがあるため、
@@ -1115,6 +1115,7 @@
     pwPurpose = purpose;
     pwModalTitle.textContent = purpose === 'admin' ? '編集者ページのパスワード（3桁）'
       : purpose === 'reset' ? '閲覧数リセット用パスワード（3桁）'
+      : purpose === 'add' ? 'ゼミを追加するパスワード（3桁）'
       : '編集用パスワード（3桁）';
     pwError.hidden = true; pwInput.value = '';
     pwModal.classList.add('open'); pwInput.focus();
@@ -1130,6 +1131,7 @@
       persist();
       renderAdmin();
     }
+    else if (pwPurpose === 'add') { createNewZemi(); }
     else { setUnlocked(true); saveUiState(); }
   }
   pwSubmit.addEventListener('click', tryPwSubmit);
@@ -1253,7 +1255,7 @@
   gearBtnDetail.addEventListener('click', () => openSettings('detail'));
 
   // ---- 新規掲載 ----
-  addBtn.addEventListener('click', () => {
+  function createNewZemi(){
     const id = 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     state.zemi.unshift({
       id, name: '〇〇ゼミ', tagline: '', profName: '', profField: '', profCourses: '', profQuote: '',
@@ -1267,8 +1269,10 @@
     loadEntry(id);
     saveUiState();
     persist();
-    openPwModal('edit');
-  });
+    setUnlocked(true); saveUiState();
+  }
+  // ゼミを増やすときも、先にパスワード(3桁)を入力してから追加する
+  addBtn.addEventListener('click', () => openPwModal('add'));
 
   backBtn.addEventListener('click', () => {
     try { sessionStorage.removeItem(CARET_KEY); } catch(e) {}
